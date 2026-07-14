@@ -1,0 +1,41 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Rust Stable + Ferramentas
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache das dependências (Cargo Cache)
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "crew-cache"
+
+      - name: Verificar formatação do código (rustfmt)
+        run: cargo fmt --all -- --check
+
+      - name: Rodar Linter (Clippy)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Compilar o projeto
+        run: cargo build --verbose
+
+      - name: Rodar testes automáticos
+        run: cargo test --verbose
