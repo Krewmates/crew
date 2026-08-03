@@ -6,6 +6,9 @@ mod error;
 mod git;
 mod ui;
 
+use clap::Parser;
+use cli::{Cli, Commands};
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -13,7 +16,6 @@ async fn main() {
     match &cli.command {
         Commands::Status => {
             println!("Executando: crew status...");
-            // Aqui você chamará a função do src/commands/status.rs no futuro
         }
         Commands::Up => {
             println!("Executando: crew up...");
