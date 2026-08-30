@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tokio = { version = "1.35", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+thiserror = "2.0.19"
 bollard = "0.21"
 clap = { version = "4.4", features = ["derive"] }
 inquire = "0.9.4"
-comfy-table = "7.1"
+comfy-table = "8"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
+regex = "1"
