@@ -1,16 +1,43 @@
 use clap::{Parser, Subcommand};
 
-#[derive(Parser)] // <-- Isso injeta o método parse() na struct
-#[command(name = "crew", about = "A tripulação do terminal", version)]
+#[derive(Parser, Debug)]
+#[command(name = "crew")]
+#[command(about = "Developer experience CLI for Git + Docker orchestration")]
+#[command(version)]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub commands: Commands,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Mostra o painel cruzado de status (Git + Docker)
+    /// Global shortcuts
+    #[command(subcommand)]
+    Global(GlobalCommands),
+
+    /// Git interactive menu
+    Git(GitCommand),
+
+    /// Docker operations
+    #[command(subcommand)]
+    Docker(DockerCommands),
+}
+
+#[derive(Subcommand, Debug)]
+pub enum GlobalCommands {
     Status,
-    /// Abre o menu interativo para subir serviços seletivamente
     Up,
+    Down,
+}
+
+#[derive(Parser, Debug)]
+pub struct GitCommand {
+    // MVP: Sem subcomandos. `crew git` abre o menu.
+}
+
+#[derive(Subcommand, Debug)]
+pub enum DockerCommands {
+    Ls,
+    Logs { container: String },
+    Kill { container: String },
 }
