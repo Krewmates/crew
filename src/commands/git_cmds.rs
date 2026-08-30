@@ -18,18 +18,10 @@ pub async fn run_git_menu() -> CrewResult<()> {
         let action = git_menu::render_main_menu()?;
 
         match action {
-            GitMenuAction::ViewCurrentBranch => {
-                handle_view_current_branch().await;
-            }
-            GitMenuAction::ListBranches => {
-                handle_list_branches().await;
-            }
-            GitMenuAction::CreateBranch => {
-                handle_create_branch().await;
-            }
-            GitMenuAction::SwitchBranch => {
-                handle_switch_branch().await;
-            }
+            GitMenuAction::ViewCurrentBranch => handle_view_current_branch(),
+            GitMenuAction::ListBranches => handle_list_branches(),
+            GitMenuAction::CreateBranch => handle_create_branch(),
+            GitMenuAction::SwitchBranch => handle_switch_branch(),
             GitMenuAction::Exit => {
                 show_info("Exiting Crew Git.");
                 break;
@@ -42,44 +34,27 @@ pub async fn run_git_menu() -> CrewResult<()> {
     Ok(())
 }
 
-async fn handle_view_current_branch() {
+fn handle_view_current_branch() {
     match get_git_status() {
-        Ok(git_info) => {
-            let (branch, is_dirty) = git_info;
-            show_current_branch(&branch, is_dirty);
-            pause_for_user();
-        }
-        Err(e) => {
-            show_error(&e.ui_warning());
-            pause_for_user();
-        }
+        Ok((branch, is_dirty)) => show_current_branch(&branch, is_dirty),
+        Err(e) => show_error(&e.ui_warning()),
     }
+    pause_for_user();
 }
 
-async fn handle_list_branches() {
-    match get_current_branch() {
-        Ok(current) => match list_branches() {
-            Ok(branches) => {
-                show_branches_list(&branches, &current);
-                pause_for_user();
-            }
-            Err(e) => {
-                show_error(&e.ui_warning());
-                pause_for_user();
-            }
-        },
-        Err(e) => {
-            show_error(&e.ui_warning());
-            pause_for_user();
-        }
+fn handle_list_branches() {
+    match get_current_branch().and_then(|current| list_branches().map(|branches| (current, branches))) {
+        Ok((current, branches)) => show_branches_list(&branches, &current),
+        Err(e) => show_error(&e.ui_warning()),
     }
+    pause_for_user();
 }
 
-async fn handle_create_branch() {
+fn handle_create_branch() {
     let full_branch_name = match prompt_create_branch() {
         Ok(name) => name,
         Err(e) => {
-            show_error(&e.to_string());
+            show_error(&e.ui_warning());
             pause_for_user();
             return;
         }
@@ -95,21 +70,16 @@ async fn handle_create_branch() {
     }
 
     match create_branch(&full_branch_name) {
-        Ok(()) => {
-            show_success(&format!(
-                "Branch '{}' created and switched!",
-                full_branch_name
-            ));
-            pause_for_user();
-        }
-        Err(e) => {
-            show_error(&format!("Failed to create branch: {}", e.to_string()));
-            pause_for_user();
-        }
+        Ok(()) => show_success(&format!(
+            "Branch '{}' created and switched!",
+            full_branch_name
+        )),
+        Err(e) => show_error(&format!("Failed to create branch: {}", e)),
     }
+    pause_for_user();
 }
 
-async fn handle_switch_branch() {
+fn handle_switch_branch() {
     let branches = match list_branches() {
         Ok(b) => b,
         Err(e) => {
@@ -122,20 +92,15 @@ async fn handle_switch_branch() {
     let selected_branch = match prompt_switch_branch(branches) {
         Ok(branch) => branch,
         Err(e) => {
-            show_error(&e.to_string());
+            show_error(&e.ui_warning());
             pause_for_user();
             return;
         }
     };
 
     match switch_branch(&selected_branch) {
-        Ok(()) => {
-            show_success(&format!("Switched to branch '{}'", selected_branch));
-            pause_for_user();
-        }
-        Err(e) => {
-            show_error(&format!("Failed to switch branch: {}", e.to_string()));
-            pause_for_user();
-        }
+        Ok(()) => show_success(&format!("Switched to branch '{}'", selected_branch)),
+        Err(e) => show_error(&format!("Failed to switch branch: {}", e)),
     }
+    pause_for_user();
 }

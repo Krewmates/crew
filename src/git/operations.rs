@@ -1,15 +1,14 @@
-#![allow(dead_code)]
-
 use crate::error::{CrewError, CrewResult};
 use std::process::Command;
 
-/// Cria uma nova branch a partir do HEAD atual.
-
-pub fn create_branch(branch_name: &str) -> CrewResult<()> {
+/// Executa `git checkout` com os argumentos fornecidos.
+///
+/// # Arguments
+/// * `args` - Argumentos do checkout (ex: `["-b", "feat/nova"]` ou `["main"]`)
+fn git_checkout(args: &[&str]) -> CrewResult<()> {
     let output = Command::new("git")
         .arg("checkout")
-        .arg("-b")
-        .arg(branch_name)
+        .args(args)
         .output()
         .map_err(|e| CrewError::git_command(format!("Failed to execute git: {}", e)))?;
 
@@ -21,30 +20,20 @@ pub fn create_branch(branch_name: &str) -> CrewResult<()> {
     Ok(())
 }
 
+/// Cria uma nova branch a partir do HEAD atual.
+pub fn create_branch(branch_name: &str) -> CrewResult<()> {
+    git_checkout(&["-b", branch_name])
+}
+
 /// Troca para uma branch existente.
-///
 pub fn switch_branch(branch_name: &str) -> CrewResult<()> {
-    let output = Command::new("git")
-        .arg("checkout")
-        .arg(branch_name)
-        .output()
-        .map_err(|e| CrewError::git_command(format!("Failed to execute git: {}", e)))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(CrewError::git_command(stderr.to_string()));
-    }
-
-    Ok(())
+    git_checkout(&[branch_name])
 }
 
 /// Valida se um nome de branch é válido segundo as regras do Git.
 ///
 /// # Arguments
 /// * `name` - Nome da branch a validar
-///
-/// # Returns
-/// `true` se válido, `false` caso contrário
 pub fn is_valid_branch_name(name: &str) -> bool {
     if name.is_empty() {
         return false;
@@ -58,7 +47,6 @@ pub fn is_valid_branch_name(name: &str) -> bool {
         return false;
     }
 
-    // Não pode conter caracteres especiais problemáticos
     !name.contains(|c: char| c.is_control() || c == '~' || c == '^' || c == ':')
 }
 
